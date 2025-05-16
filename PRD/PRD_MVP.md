@@ -39,7 +39,6 @@ The MVP will include:
 
 - **User Interface**: Web UI or CLI for chat-based interaction
 - **Backend API**: A service for handling queries, data updates, and reminders
-- **Database**: A structured data store for managing user health records
 - **LLM Module**: A language model for generating personalized health recommendations
 
 ## 4. Non-Functional Requirements
