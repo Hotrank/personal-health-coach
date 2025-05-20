@@ -1,6 +1,8 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+import ollama
 
 app = FastAPI()
 
@@ -18,7 +20,15 @@ def read_root():
     return {"message": "Backend is up!"}
 
 @app.post("/chat")
-def chat(message: dict):
+async def chat(message: dict):
     user_input = message.get("text", "")
-    response = f"You said: {user_input}"
-    return {"response": response}
+
+    def stream_response():
+        for chunk in ollama.chat(
+            model="llama3.2",  # or your preferred model
+            messages=[{"role": "user", "content": user_input}],
+            stream=True,
+        ):
+            yield chunk["message"]["content"]
+
+    return StreamingResponse(stream_response(), media_type="text/plain")

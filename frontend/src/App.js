@@ -7,11 +7,12 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!userInput.trim()) return;
 
     const newUserMessage = { sender: 'user', text: userInput };
     setMessages((prev) => [...prev, newUserMessage]);
+
+    setMessages((prev) => [...prev, { sender: 'bot', text: '' }]);
 
     try {
       const res = await fetch('http://127.0.0.1:8000/chat', {
@@ -22,12 +23,30 @@ function App() {
         body: JSON.stringify({ text: userInput }),
       });
 
-      const data = await res.json();
-      const newBotMessage = { sender: 'bot', text: data.response };
-      setMessages((prev) => [...prev, newBotMessage]);
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let botText = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        botText += chunk;
+
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { sender: 'bot', text: botText };
+          return updated;
+        });
+      }
     } catch (error) {
-      const errorMessage = { sender: 'bot', text: 'Error: backend unavailable.' };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'bot', text: 'Error: backend unavailable.' },
+      ]);
     }
 
     setUserInput('');
@@ -42,7 +61,7 @@ function App() {
             key={index}
             className={`message ${msg.sender === 'user' ? 'user' : 'bot'}`}
           >
-            <strong>{msg.sender === 'user' ? 'You' : 'coach'}:</strong> {msg.text}
+            <strong>{msg.sender === 'user' ? 'You' : 'Coach'}:</strong> {msg.text}
           </div>
         ))}
       </div>
@@ -60,4 +79,3 @@ function App() {
 }
 
 export default App;
-
