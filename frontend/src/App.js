@@ -42,7 +42,7 @@ function App() {
             key={index}
             className={`message ${msg.sender === 'user' ? 'user' : 'bot'}`}
           >
-            <strong>{msg.sender === 'user' ? 'You' : 'Bot'}:</strong> {msg.text}
+            <strong>{msg.sender === 'user' ? 'You' : 'coach'}:</strong> {msg.text}
           </div>
         ))}
       </div>
