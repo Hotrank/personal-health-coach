@@ -146,4 +146,5 @@ function App() {
   );
 }
 
+export { ChatWindow };
 export default App;
