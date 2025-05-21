@@ -1,3 +1,4 @@
+
 import ollama
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -53,7 +54,7 @@ async def logout():
 async def chat(message: dict):
 
     # Check if the request contains a valid token
-    token = message.get("token")
+    token = message.get("token", "")
     if not token:
         raise HTTPException(status_code=401, detail="Missing token")
 
