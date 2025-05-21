@@ -1,10 +1,10 @@
+import ollama
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel
-from google.oauth2 import id_token
+from fastapi.responses import JSONResponse, StreamingResponse
 from google.auth.transport import requests
-import ollama
+from google.oauth2 import id_token
+from pydantic import BaseModel
 
 GOOGLE_CLIENT_ID = '30767248244-t7n4e1o3m224bot124ntltje4ir06vei.apps.googleusercontent.com'
 
