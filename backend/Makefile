@@ -9,3 +9,6 @@ format:
 
 start-dev:
 	uvicorn main:app --reload
+
+test:
+	PYTHONPATH=. pytest
