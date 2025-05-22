@@ -77,6 +77,11 @@ async def chat(message: dict):
         raise HTTPException(status_code=401, detail="Invalid token")
     user_input = message.get("text", "")
 
+    id = message.get("userId", "")
+    if idinfo.get("sub") != id:
+        raise HTTPException(status_code=401, detail="Invalid user ID")
+
+
     def stream_response():
         for chunk in ollama.chat(
             model="llama3.2",  # or your preferred model

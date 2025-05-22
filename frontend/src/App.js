@@ -60,7 +60,7 @@ function App() {
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     const token = credentialResponse.credential;
     const decoded = jwtDecode(token);
-    setUser({ ...decoded, credential: token });
+  
 
     try {
       const res = await fetch('http://127.0.0.1:8000/verify-token', {
@@ -71,6 +71,7 @@ function App() {
 
       if (!res.ok) throw new Error('Token verification failed');
       const verifiedUser = await res.json();
+      setUser({ ...decoded, credential: token });
       console.log('User verified:', verifiedUser);
     } catch (error) {
       console.error('Error verifying token:', error);
@@ -97,7 +98,7 @@ function App() {
       const res = await fetch('http://127.0.0.1:8000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: userInput, token: user?.credential }),
+        body: JSON.stringify({ text: userInput, token: user?.credential, userId: user?.sub }),
       });
 
       if (!res.body) throw new Error('No response body');
