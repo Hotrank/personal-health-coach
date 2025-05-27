@@ -8,6 +8,7 @@ dependencies = [
     "fastapi>=0.115.12",
     "google-auth>=2.40.1",
     "ollama>=0.4.8",
+    "psycopg[binary]>=3.2.9",
     "requests>=2.32.3",
     "uvicorn>=0.34.2",
 ]
