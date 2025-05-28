@@ -1,13 +1,26 @@
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from pathlib import Path
 
 from alembic import context
+from database.config import PostgresConfig
+from database.db_models import Base
+from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+# TODO: Create own config for alembic
+env_path = Path(__file__).resolve().parent.parent.parent / "dev.env"
+postgres_config = PostgresConfig(_env_file=env_path)  # Load configuration from .env file
+postgres_url = postgres_config.connection_uri()
+
+# specify the psycopg driver for PostgreSQL, otherwise Alembic expects psycopg2
+alembic_url = postgres_url.replace("postgresql://", "postgresql+psycopg://")
+print(f"Using Alembic URL: {alembic_url}")
+config.set_main_option(
+    "sqlalchemy.url",
+    alembic_url
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -18,7 +31,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
