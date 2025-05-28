@@ -9,6 +9,7 @@ dependencies = [
     "google-auth>=2.40.1",
     "ollama>=0.4.8",
     "psycopg[binary]>=3.2.9",
+    "pydantic-settings>=2.9.1",
     "requests>=2.32.3",
     "uvicorn>=0.34.2",
 ]
