@@ -98,7 +98,7 @@ function App() {
       const res = await fetch('http://127.0.0.1:8000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: userInput, token: user?.credential, userId: user?.sub }),
+        body: JSON.stringify({ text: userInput, token: user?.credential, userId: user?.sub, userType: 'google' }),
       });
 
       if (!res.body) throw new Error('No response body');

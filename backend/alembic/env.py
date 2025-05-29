@@ -13,14 +13,12 @@ config = context.config
 # TODO(SCRUM-25): Create own config for alembic
 env_path = Path(__file__).resolve().parent.parent.parent / "dev.env"
 postgres_config = PostgresConfig(_env_file=env_path)  # Load configuration from .env file
-postgres_url = postgres_config.connection_uri()
-
 # specify the psycopg driver for PostgreSQL, otherwise Alembic expects psycopg2
-alembic_url = postgres_url.replace("postgresql://", "postgresql+psycopg://")
-print(f"Using Alembic URL: {alembic_url}")
+postgres_url = postgres_config.connection_uri_psycopg()
+
 config.set_main_option(
     "sqlalchemy.url",
-    alembic_url
+    postgres_url
 )
 
 # Interpret the config file for Python logging.

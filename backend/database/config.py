@@ -17,4 +17,11 @@ class PostgresConfig(BaseSettings):
             f"{self.host}:{self.port}/{self.database}"
         )
     
+    def connection_uri_psycopg(self) -> str:
+        # Returns a PostgreSQL URI string for psycopg
+        return (
+            f"postgresql+psycopg://{self.user}:{self.password.get_secret_value()}@"
+            f"{self.host}:{self.port}/{self.database}"
+        )
+    
     model_config = {"extra": "ignore"}

@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import psycopg
 import pytest
-from config import PostgresConfig
+from database.config import PostgresConfig
 
 """Test database connection and query execution.
 This module contains tests for the database connection and query execution.
@@ -10,7 +12,8 @@ It uses pytest to run the tests and psycopg to connect to the PostgreSQL databas
 @pytest.fixture(scope="module")
 def db_connection():
     """Fixture to create a database connection."""
-    config = PostgresConfig(_env_file='../dev.env')  # Load configuration from .env file
+    env_path = Path(__file__).resolve().parents[3] / "dev.env"
+    config = PostgresConfig(_env_file=env_path)  # Load configuration from .env file
     conn = psycopg.connect(config.connection_uri())
     conn.autocommit = True
     # Yield the connection to be used in tests
