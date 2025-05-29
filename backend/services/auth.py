@@ -1,7 +1,13 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-GOOGLE_CLIENT_ID = "30767248244-t7n4e1o3m224bot124ntltje4ir06vei.apps.googleusercontent.com"
+# TODO(SCRUM-24): load env file based on the environment
+load_dotenv(Path(__file__).resolve().parents[2] / 'dev.env')
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 def verify_google_token(token: str) -> dict:
     return id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)

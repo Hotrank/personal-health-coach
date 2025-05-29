@@ -16,3 +16,5 @@ class PostgresConfig(BaseSettings):
             f"postgresql://{self.user}:{self.password.get_secret_value()}@"
             f"{self.host}:{self.port}/{self.database}"
         )
+    
+    model_config = {"extra": "ignore"}

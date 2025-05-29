@@ -9,7 +9,8 @@ from sqlalchemy import engine_from_config, pool
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-# TODO: Create own config for alembic
+
+# TODO(SCRUM-25): Create own config for alembic
 env_path = Path(__file__).resolve().parent.parent.parent / "dev.env"
 postgres_config = PostgresConfig(_env_file=env_path)  # Load configuration from .env file
 postgres_url = postgres_config.connection_uri()
