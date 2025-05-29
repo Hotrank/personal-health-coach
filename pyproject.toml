@@ -22,3 +22,6 @@ dev = [
     "mypy>=1.15.0",
     "pytest>=8.3.5",
 ]
+
+[tool.mypy]
+explicit_package_bases = true

@@ -12,7 +12,7 @@ config = context.config
 
 # TODO(SCRUM-25): Create own config for alembic
 env_path = Path(__file__).resolve().parent.parent.parent / "dev.env"
-postgres_config = PostgresConfig(_env_file=env_path)  # Load configuration from .env file
+postgres_config = PostgresConfig(_env_file=env_path)  # type: ignore[call-arg]
 # specify the psycopg driver for PostgreSQL, otherwise Alembic expects psycopg2
 postgres_url = postgres_config.connection_uri_psycopg()
 

@@ -1,4 +1,4 @@
-.PHONY dev-start
+.PHONY: dev-start
 
 dev-start:
 	npm start
