@@ -27,7 +27,7 @@ def test_chat_invalid_token(mock_verify, client):
     assert response.json()["detail"] == "Invalid token"
 
 @patch("api.v1.routes.chat.verify_google_token")
-@patch("api.v1.routes.chat.stream_chat_response")
+@patch("api.v1.routes.chat.stream_and_store_response")
 def test_chat_success(mock_stream, mock_verify, client):
     mock_verify.return_value = {"sub": "123", "name": "unit test", "email": "unit-test@email.com"}
     mock_stream.return_value = iter(["response1", "response2"])
