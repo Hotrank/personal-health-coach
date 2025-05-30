@@ -2,3 +2,7 @@
 .vscode
 __pycache__/
 *.pyc
+*.env
+dev.env
+
+internal_readme.md
