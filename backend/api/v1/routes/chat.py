@@ -5,7 +5,11 @@ from database.db_models import SenderEnum
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from services.auth import verify_google_token
-from services.chat import save_chat_message, stream_and_store_response
+from services.chat import (
+    get_recent_chat_history,
+    save_chat_message,
+    stream_and_store_response,
+)
 from services.user import get_or_create_user
 
 router = APIRouter()
@@ -27,7 +31,8 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
     # Save user input to chat_history table
     save_chat_message(db, user_id, SenderEnum.user, user_input)
 
+    recent_messages = get_recent_chat_history(db, user_id)
     return StreamingResponse(
-        stream_and_store_response(user_input, user_id, db),
+        stream_and_store_response(user_input, user_id, db, recent_messages=recent_messages),
         media_type="text/event-stream"
     )
