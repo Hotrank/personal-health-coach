@@ -30,3 +30,4 @@ explicit_package_bases = true
 exclude = [
     "backend/alembic",  
 ]
+line-length = 120

@@ -15,9 +15,7 @@ def verify_google_token(token: str) -> dict:
     if not token:
         raise ValueError("Missing token")
     try:
-        result = id_token.verify_oauth2_token(
-            token, requests.Request(), GOOGLE_CLIENT_ID
-        )
+        result = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
     except GoogleAuthError as e:
         raise ValueError("Invalid token") from e
 

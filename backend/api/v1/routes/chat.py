@@ -40,7 +40,11 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
 
     return StreamingResponse(
         stream_and_store_response(
-            user_input, user_id, db, recent_messages=recent_messages, user_memory=user_memory
+            user_input,
+            user_id,
+            db,
+            recent_messages=recent_messages,
+            user_memory=user_memory,
         ),
         media_type="text/event-stream",
     )

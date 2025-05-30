@@ -25,9 +25,7 @@ def test_chat_missing_token(client):
 @patch("api.v1.routes.chat.verify_google_token")
 def test_chat_invalid_token(mock_verify, client):
     mock_verify.side_effect = ValueError("Invalid token")
-    response = client.post(
-        "/chat", json={"text": "hello", "userId": "123", "token": "badtoken"}
-    )
+    response = client.post("/chat", json={"text": "hello", "userId": "123", "token": "badtoken"})
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json()["detail"] == "Invalid token"
 
@@ -41,9 +39,7 @@ def test_chat_success(mock_stream, mock_verify, client):
         "email": "unit-test@email.com",
     }
     mock_stream.return_value = iter(["response1", "response2"])
-    response = client.post(
-        "/chat", json={"text": "hello", "userId": "123", "token": "goodtoken"}
-    )
+    response = client.post("/chat", json={"text": "hello", "userId": "123", "token": "goodtoken"})
     assert response.status_code == 200
     # StreamingResponse returns a generator, so we need to read the content
     assert b"response1" in response.content

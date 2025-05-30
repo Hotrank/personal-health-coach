@@ -65,7 +65,9 @@ def test_get_recent_chat_history_returns_list(user_id):
         MagicMock(sender=SenderEnum.bot, message="hi there", timestamp=None),
     ]
     # Simulate .query().filter().order_by().limit().all() chain
-    mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = fake_entries
+    mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = (
+        fake_entries
+    )
     result = get_recent_chat_history(mock_db, user_id)
     assert result == [
         {"role": SenderEnum.bot.value, "content": "hi there"},
