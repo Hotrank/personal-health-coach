@@ -5,6 +5,7 @@ from fastapi.responses import StreamingResponse
 from services.auth import verify_google_token
 from services.chat import (
     get_recent_chat_history,
+    get_user_memory,
     save_chat_message,
     stream_and_store_response,
 )
@@ -35,9 +36,11 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
     save_chat_message(db, user_id, SenderEnum.user, user_input)
 
     recent_messages = get_recent_chat_history(db, user_id)
+    user_memory = get_user_memory(db, user_id)
+
     return StreamingResponse(
         stream_and_store_response(
-            user_input, user_id, db, recent_messages=recent_messages
+            user_input, user_id, db, recent_messages=recent_messages, user_memory=user_memory
         ),
         media_type="text/event-stream",
     )
