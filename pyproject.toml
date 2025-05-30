@@ -25,3 +25,8 @@ dev = [
 
 [tool.mypy]
 explicit_package_bases = true
+
+[tool.ruff]
+exclude = [
+    "backend/alembic",  
+]

@@ -16,10 +16,7 @@ postgres_config = PostgresConfig(_env_file=env_path)  # type: ignore[call-arg]
 # specify the psycopg driver for PostgreSQL, otherwise Alembic expects psycopg2
 postgres_url = postgres_config.connection_uri_psycopg()
 
-config.set_main_option(
-    "sqlalchemy.url",
-    postgres_url
-)
+config.set_main_option("sqlalchemy.url", postgres_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -76,9 +73,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

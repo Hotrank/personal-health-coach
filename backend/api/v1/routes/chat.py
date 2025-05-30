@@ -1,5 +1,3 @@
-
-
 from database.connection import get_db
 from database.db_models import SenderEnum
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,6 +12,7 @@ from services.user import get_or_create_user
 
 router = APIRouter()
 
+
 @router.post("/chat")
 async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
     token = message.get("token", "")
@@ -22,8 +21,12 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
         idinfo = verify_google_token(token)
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
-    
-    google_id, name, email = idinfo.get("sub", ""), idinfo.get("name", ""), idinfo.get("email", "")
+
+    google_id, name, email = (
+        idinfo.get("sub", ""),
+        idinfo.get("name", ""),
+        idinfo.get("email", ""),
+    )
     user_id = get_or_create_user(db, google_sub=google_id, name=name, email=email)
     if not user_id:
         raise HTTPException(status_code=500, detail="Failed to create or retrieve user")
@@ -33,6 +36,8 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
 
     recent_messages = get_recent_chat_history(db, user_id)
     return StreamingResponse(
-        stream_and_store_response(user_input, user_id, db, recent_messages=recent_messages),
-        media_type="text/event-stream"
+        stream_and_store_response(
+            user_input, user_id, db, recent_messages=recent_messages
+        ),
+        media_type="text/event-stream",
     )

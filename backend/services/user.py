@@ -5,7 +5,12 @@ from database.db_models import User
 from sqlalchemy.orm import Session
 
 
-def get_or_create_user(db: Session, google_sub: str, name: Optional[str] = None, email: Optional[str] = None) -> uuid.UUID:
+def get_or_create_user(
+    db: Session,
+    google_sub: str,
+    name: Optional[str] = None,
+    email: Optional[str] = None,
+) -> uuid.UUID:
     user = db.query(User).filter(User.google_sub == google_sub).first()
     if user:
         return user.id

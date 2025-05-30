@@ -5,6 +5,7 @@ from services.auth import verify_google_token
 
 router = APIRouter()
 
+
 @router.post("/verify-token")
 async def verify_token(token_data: TokenData) -> dict:
     try:
@@ -16,6 +17,7 @@ async def verify_token(token_data: TokenData) -> dict:
         }
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
+
 
 @router.post("/logout")
 async def logout() -> JSONResponse:

@@ -9,6 +9,7 @@ This module contains tests for the database connection and query execution.
 It uses pytest to run the tests and psycopg to connect to the PostgreSQL database.
 """
 
+
 @pytest.fixture(scope="module")
 def db_connection():
     """Fixture to create a database connection."""
@@ -26,6 +27,7 @@ def test_db_connection(db_connection):
     """Test if the database connection is established."""
     assert db_connection is not None
     assert db_connection.closed == 0  # 0 means the connection is open
+
 
 # Test query execution
 def test_query_execution(db_connection):

@@ -8,7 +8,9 @@ from llm.prompts import SYSTEM_PROMPT, USER_MEMORY
 from sqlalchemy.orm import Session
 
 
-def stream_llm_response(user_input: str, recent_messages: Optional[list[dict]] = None) -> Generator[str, None, None]:
+def stream_llm_response(
+    user_input: str, recent_messages: Optional[list[dict]] = None
+) -> Generator[str, None, None]:
     """
     Stream the response from the LLM based on user input and recent chat history.
     If recent_messages is provided, it will be included in the context.
@@ -16,12 +18,12 @@ def stream_llm_response(user_input: str, recent_messages: Optional[list[dict]] =
     # Prepare the messages for the LLM
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "system", "content": USER_MEMORY}]
+        {"role": "system", "content": USER_MEMORY},
+    ]
     if recent_messages:
         messages.extend(recent_messages)
-    messages.append(
-        {"role": "user", "content": user_input})
-    
+    messages.append({"role": "user", "content": user_input})
+
     for chunk in ollama.chat(
         model="llama3.2",
         messages=messages,
@@ -29,20 +31,18 @@ def stream_llm_response(user_input: str, recent_messages: Optional[list[dict]] =
     ):
         yield chunk["message"]["content"]
 
+
 def save_chat_message(db: Session, user_id: UUID, sender: SenderEnum, message: str):
-    chat_entry = ChatHistory(
-        user_id=user_id,
-        sender=sender,
-        message=message
-    )
+    chat_entry = ChatHistory(user_id=user_id, sender=sender, message=message)
     db.add(chat_entry)
     db.commit()
+
 
 def stream_and_store_response(
     user_input: str,
     user_id: UUID,
     db: Session,
-    recent_messages: Optional[list[dict]] = None
+    recent_messages: Optional[list[dict]] = None,
 ) -> Generator[str, None, None]:
     buffer = ""
     for chunk in stream_llm_response(user_input, recent_messages):
@@ -51,6 +51,7 @@ def stream_and_store_response(
 
     # Save full bot message to DB
     save_chat_message(db, user_id, SenderEnum.bot, buffer)
+
 
 def get_recent_chat_history(db: Session, user_id: UUID) -> list[dict]:
     """
@@ -62,7 +63,7 @@ def get_recent_chat_history(db: Session, user_id: UUID) -> list[dict]:
         db.query(ChatHistory)
         .filter(
             ChatHistory.user_id == user_id,
-            ChatHistory.timestamp >= twenty_four_hours_ago
+            ChatHistory.timestamp >= twenty_four_hours_ago,
         )
         .order_by(ChatHistory.timestamp.desc())
         .limit(20)
@@ -72,4 +73,3 @@ def get_recent_chat_history(db: Session, user_id: UUID) -> list[dict]:
         {"role": entry.sender.value, "content": entry.message}
         for entry in reversed(chat_entries)
     ]
-
