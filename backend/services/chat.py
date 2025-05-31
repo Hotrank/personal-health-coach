@@ -83,19 +83,23 @@ def stream_and_store_response(
     save_chat_message(db, user_id, SenderEnum.bot, buffer)
 
 
-def get_recent_chat_history(db: Session, user_id: UUID, count: int = RECENT_CHAT_COUNT) -> list[dict]:
+def get_recent_chat_history(
+    db: Session,
+    user_id: UUID,
+    count: int = RECENT_CHAT_COUNT,
+    time_delta: Optional[timedelta] = None,
+) -> list[dict]:
     """
-    Retrieve up to 20 most recent chat messages within the last 24 hours for a user,
-    and return them as a list of dicts with 'role' and 'content' keys.
+    Retrieve up to `count` most recent chat messages for a user, optionally within a given time delta.
+    If time_delta is None, no time filtering is applied.
+    Returns a list of dicts with 'role' and 'content' keys.
     """
-    twenty_four_hours_ago = datetime.now() - timedelta(days=1)
+    query = db.query(ChatHistory).filter(ChatHistory.user_id == user_id)
+    if time_delta is not None:
+        since_time = datetime.now() - time_delta
+        query = query.filter(ChatHistory.timestamp >= since_time)
     chat_entries = (
-        db.query(ChatHistory)
-        .filter(
-            ChatHistory.user_id == user_id,
-            ChatHistory.timestamp >= twenty_four_hours_ago,
-        )
-        .order_by(ChatHistory.timestamp.desc())
+        query.order_by(ChatHistory.timestamp.desc())
         .limit(count)
         .all()
     )
