@@ -17,6 +17,7 @@ def verify_google_token(token: str) -> dict:
     try:
         result = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
     except GoogleAuthError as e:
+        print(f"Token verification failed: {e}")
         raise ValueError("Invalid token") from e
 
     return result

@@ -65,6 +65,6 @@ Do not return multiple tool calls in a single response, and do not return any ot
 
 It's very important that the content between <tool> and </tool> is a valid JSON object that can be parsed by the backend.
 
-If tool call does not return needed information, just tell user that you can not answer the question.
+If tool call does not return needed information, don't try to call the tool again, just say you can't process the request for now."
 
 """

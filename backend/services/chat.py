@@ -94,7 +94,7 @@ def stream_and_store_response(
         llm_response_stream = stream_llm_response(
             current_input=current_messages[-1]["content"],
             currrent_input_role=current_messages[-1]["role"],
-            recent_messages=recent_messages + current_messages[:-1],
+            recent_messages=current_messages[:-1],
             user_memory=user_memory,
         )
 
@@ -106,16 +106,24 @@ def stream_and_store_response(
             for chunk in llm_response_stream:
                 buffer += chunk
             
-            print(f"Buffer content: {buffer} \n end of buffer content")
-
+            current_messages.append(
+                {"role": "bot", "content": buffer}
+            )
             # parse the buffer string into a dict object
             tool_call = parsre_tool_call(buffer)
             tool_result = process_tool_call(tool_call)
-            print(f"Tool call result: {tool_result}")
             current_messages.append(
-                {"role": "system", "content": tool_result}
+                {"role": "user", "content": tool_result}
             )
-            continue
+
+            if tool_result == "failed":
+                yield "Sorry, I cannot process your request for now."
+                current_messages.append(
+                    {"role": "bot", "content": "Sorry, I cannot process your request for now."}
+                )
+                break
+            else:
+                continue
         else:
             buffer = initial_chunk
 
@@ -156,7 +164,7 @@ def process_tool_call(tool_call: dict) -> str:
     Returns the result as a string to be stored in the chat history.
     """
 
-    return "Tool call result: Not implemented yet"
+    return "failed"
 
 def get_recent_chat_history(
     db: Session,
