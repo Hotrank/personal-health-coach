@@ -28,8 +28,20 @@ class FHIRClient:
         """
         url = f"{self.base_url}/{resource.get_resource_type()}"
         headers = {"Content-Type": "application/fhir+json"}
-        response = requests.post(url, json=resource.model_dump(), headers=headers)
+        response = requests.post(url, data=resource.model_dump_json(), headers=headers)
         if response.status_code in (201, 200):
+            resource_json = response.json()
+            resource_class = get_fhir_model_class(resource.get_resource_type())
+            return resource_class(**resource_json)
+        else:
+            response.raise_for_status()
+
+    def update_resource(self, resource: Resource) -> Resource:
+        """Update an existing FHIR resource."""
+        url = f"{self.base_url}/{resource.get_resource_type()}/{resource.id}"
+        headers = {"Content-Type": "application/fhir+json"}
+        response = requests.put(url, data=resource.model_dump_json(), headers=headers)
+        if response.status_code in (200, 204):
             resource_json = response.json()
             resource_class = get_fhir_model_class(resource.get_resource_type())
             return resource_class(**resource_json)
