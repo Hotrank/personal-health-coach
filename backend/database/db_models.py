@@ -27,6 +27,7 @@ class User(Base):
 class SenderEnum(enum.Enum):
     user = "user"
     bot = "bot"
+    system = "system"
 
 
 class ChatHistory(Base):

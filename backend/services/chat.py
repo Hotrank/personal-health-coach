@@ -1,17 +1,25 @@
+import json
 from datetime import datetime, timedelta
 from typing import Generator, Optional
 from uuid import UUID
 
 import ollama
 from database.db_models import ChatHistory, SenderEnum, UserMemory
-from llm.prompts import MEMORY_CONSOLIDATE_PROMPT, MEMORY_SUMMARIZE_PROMPT, SYSTEM_PROMPT, USER_MEMORY_PROMPT
+from llm.prompts import (
+    FHIR_TOOL_PROMPT,
+    MEMORY_CONSOLIDATE_PROMPT,
+    MEMORY_SUMMARIZE_PROMPT,
+    SYSTEM_PROMPT,
+    USER_MEMORY_PROMPT,
+)
 from sqlalchemy.orm import Session
 
 RECENT_CHAT_COUNT = 20
 
 
 def stream_llm_response(
-    user_input: str,
+    current_input: str,
+    currrent_input_role: str = "user",
     recent_messages: Optional[list[dict]] = None,
     user_memory: Optional[str] = None,
 ) -> Generator[str, None, None]:
@@ -23,6 +31,12 @@ def stream_llm_response(
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
     ]
+    messages.append(
+        {
+            "role": "system",
+            "content": FHIR_TOOL_PROMPT,
+        }
+    )
     if user_memory:
         messages.append(
             {
@@ -32,7 +46,7 @@ def stream_llm_response(
         )
     if recent_messages:
         messages.extend(recent_messages)
-    messages.append({"role": "user", "content": user_input})
+    messages.append({"role": currrent_input_role, "content": current_input})
 
     for chunk in ollama.chat(
         model="llama3.2",
@@ -74,14 +88,75 @@ def stream_and_store_response(
     This function will yield chunks of the response as they are generated,
     and save the complete response to the chat history once streaming is done.
     """
-    buffer = ""
-    for chunk in stream_llm_response(user_input, recent_messages, user_memory):
-        buffer += chunk
-        yield chunk
+    current_messages = [{"role": "user", "content": user_input}]
 
-    # Save full bot message to DB
-    save_chat_message(db, user_id, SenderEnum.bot, buffer)
+    while True:
+        llm_response_stream = stream_llm_response(
+            current_input=current_messages[-1]["content"],
+            currrent_input_role=current_messages[-1]["role"],
+            recent_messages=recent_messages + current_messages[:-1],
+            user_memory=user_memory,
+        )
 
+        initial_chunk = next(llm_response_stream, None)
+        if initial_chunk.startswith("<tool"):
+            print("Tool call detected, processing...")
+            # get the rest of the stream response
+            buffer = initial_chunk
+            for chunk in llm_response_stream:
+                buffer += chunk
+            
+            print(f"Buffer content: {buffer} \n end of buffer content")
+
+            # parse the buffer string into a dict object
+            tool_call = parsre_tool_call(buffer)
+            tool_result = process_tool_call(tool_call)
+            print(f"Tool call result: {tool_result}")
+            current_messages.append(
+                {"role": "system", "content": tool_result}
+            )
+            continue
+        else:
+            buffer = initial_chunk
+
+            for chunk in llm_response_stream:
+                buffer += chunk
+                yield chunk
+            current_messages.append(
+                {"role": "bot", "content": buffer}
+            )
+            break
+        
+    # Save all messages to the database
+    print(f"messages to save: {current_messages}")
+    for msg in current_messages:
+        save_chat_message(db, user_id, SenderEnum(msg["role"]), msg["content"])
+
+def parsre_tool_call(buffer: str) -> dict:
+    """
+    Parse the tool call from the buffer string.
+    The buffer should be in the format:
+    <tool>
+    {"function": "get_conditions", "args": {"patient_id": "<patient_id>", "since": "2023-01-01"}}
+    </tool>
+    """
+    if not (buffer.startswith("<tool>") and buffer.endswith("</tool>")):
+        raise ValueError("Invalid tool call format")
+
+    # Extract the JSON part between <tool> and </tool>
+    json_str = buffer[len("<tool>") : -len("</tool>")].strip()
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse tool call JSON: {e}\n\njson content: {json_str}")
+    
+def process_tool_call(tool_call: dict) -> str:
+    """
+    Process the tool call by executing the specified function with the provided arguments.
+    Returns the result as a string to be stored in the chat history.
+    """
+
+    return "Tool call result: Not implemented yet"
 
 def get_recent_chat_history(
     db: Session,
