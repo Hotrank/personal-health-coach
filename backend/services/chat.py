@@ -98,11 +98,7 @@ def get_recent_chat_history(
     if time_delta is not None:
         since_time = datetime.now() - time_delta
         query = query.filter(ChatHistory.timestamp >= since_time)
-    chat_entries = (
-        query.order_by(ChatHistory.timestamp.desc())
-        .limit(count)
-        .all()
-    )
+    chat_entries = query.order_by(ChatHistory.timestamp.desc()).limit(count).all()
     return [{"role": entry.sender.value, "content": entry.message} for entry in reversed(chat_entries)]
 
 
@@ -186,9 +182,12 @@ def consolidate_user_memory(existing_memory: Optional[str], new_memory: str):
 
     response = ollama.chat(
         model="llama3.2",
-        messages=[{"role": "user", "content": MEMORY_CONSOLIDATE_PROMPT.format(
-            existing_memory=existing_memory, new_memory=new_memory
-        )}],
+        messages=[
+            {
+                "role": "user",
+                "content": MEMORY_CONSOLIDATE_PROMPT.format(existing_memory=existing_memory, new_memory=new_memory),
+            }
+        ],
         stream=False,
     )
 

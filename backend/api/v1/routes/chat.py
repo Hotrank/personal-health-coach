@@ -37,7 +37,7 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
     # Save user input to chat_history table
     save_chat_message(db, user_id, SenderEnum.user, user_input)
 
-    recent_messages = get_recent_chat_history(db, user_id, time_delta= timedelta(hours=24))
+    recent_messages = get_recent_chat_history(db, user_id, time_delta=timedelta(hours=24))
     user_memory = get_user_memory(db, user_id)
 
     return StreamingResponse(

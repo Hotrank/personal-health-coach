@@ -8,12 +8,14 @@ dependencies = [
     "alembic>=1.16.1",
     "dotenv>=0.9.9",
     "fastapi>=0.115.12",
+    "fhir-resources>=8.0.0",
     "google-auth>=2.40.1",
     "ollama>=0.4.8",
     "psycopg[binary]>=3.2.9",
     "pydantic-settings>=2.9.1",
     "requests>=2.32.3",
     "sqlalchemy>=2.0.41",
+    "types-requests>=2.32.0.20250602",
     "uvicorn>=0.34.2",
 ]
 
@@ -25,6 +27,10 @@ dev = [
 
 [tool.mypy]
 explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["fhir.resources.*"]
+ignore_missing_imports = true
 
 [tool.ruff]
 exclude = [

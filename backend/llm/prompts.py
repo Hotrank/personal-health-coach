@@ -7,10 +7,7 @@ SYSTEM_PROMPT = (
     f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}."
 )
 
-USER_MEMORY_PROMPT = (
-    "Here is what we know about the user:\n\n"
-    "{user_memory}\n"
-)
+USER_MEMORY_PROMPT = "Here is what we know about the user:\n\n{user_memory}\n"
 
 MEMORY_SUMMARIZE_PROMPT = (
     "Summarize the following conversation in terms of new facts learned about the "
