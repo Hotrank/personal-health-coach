@@ -12,6 +12,7 @@ from llm.prompts import (
     SYSTEM_PROMPT,
     USER_MEMORY_PROMPT,
 )
+from services.fhir import FHIRClient
 from sqlalchemy.orm import Session
 
 RECENT_CHAT_COUNT = 20
@@ -110,8 +111,9 @@ def stream_and_store_response(
                 {"role": "bot", "content": buffer}
             )
             # parse the buffer string into a dict object
+            print(f"Buffer content: {buffer}")
             tool_call = parsre_tool_call(buffer)
-            tool_result = process_tool_call(tool_call)
+            tool_result = process_tool_call(tool_call, user_id)
             current_messages.append(
                 {"role": "user", "content": tool_result}
             )
@@ -158,13 +160,20 @@ def parsre_tool_call(buffer: str) -> dict:
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse tool call JSON: {e}\n\njson content: {json_str}")
     
-def process_tool_call(tool_call: dict) -> str:
+def process_tool_call(tool_call: dict, user_id: str) -> str:
     """
     Process the tool call by executing the specified function with the provided arguments.
     Returns the result as a string to be stored in the chat history.
     """
+    fhir_client = FHIRClient()
 
-    return "failed"
+    if tool_call["function"] == "create_resource":
+        # Handle create_resource function
+        resource_data = tool_call["args"]["resource_data"]
+        return fhir_client.create_resource(resource_data, user_id).model_dump_json()
+    else:
+        return "failed"
+        
 
 def get_recent_chat_history(
     db: Session,
