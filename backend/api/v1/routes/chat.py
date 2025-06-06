@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from database.connection import get_db
 from database.db_models import SenderEnum
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from services.auth import verify_google_token
 from services.chat import (
@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.post("/chat")
-async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
+async def chat(request: Request, message: dict, db=Depends(get_db)) -> StreamingResponse:
     token = message.get("token", "")
 
     try:
@@ -34,6 +34,10 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
     if not user_id:
         raise HTTPException(status_code=500, detail="Failed to create or retrieve user")
     user_input = message.get("text", "")
+
+    llm_client = request.app.state.llm_client
+    if not llm_client:
+        raise HTTPException(status_code=500, detail="LLM client is not initialized")
     # Save user input to chat_history table
     save_chat_message(db, user_id, SenderEnum.user, user_input)
 
@@ -42,6 +46,7 @@ async def chat(message: dict, db=Depends(get_db)) -> StreamingResponse:
 
     return StreamingResponse(
         stream_and_store_response(
+            llm_client,
             user_input,
             user_id,
             db,

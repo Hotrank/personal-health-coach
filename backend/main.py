@@ -13,6 +13,7 @@ async def lifespan(app: FastAPI):
     yield
     # No teardown needed for now, but you could add cleanup here
 
+
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(

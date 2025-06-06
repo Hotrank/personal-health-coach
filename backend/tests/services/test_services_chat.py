@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -24,13 +24,12 @@ def user_id():
 def test_stream_llm_response_yields_chunks():
     user_input = "Hello"
     recent_messages = [{"role": "user", "content": "Hi"}]
-    fake_chunks = [
-        {"message": {"content": "chunk1"}},
-        {"message": {"content": "chunk2"}},
-    ]
-    with patch("services.chat.ollama.chat", return_value=iter(fake_chunks)):
-        result = list(stream_llm_response(user_input, recent_messages))
-        assert result == ["chunk1", "chunk2"]
+    fake_chunks = ["chunk1", "chunk2"]
+    fake_llm_client = MagicMock()
+    fake_llm_client.stream.return_value = iter(fake_chunks)
+
+    result = list(stream_llm_response(fake_llm_client, user_input, recent_messages))
+    assert result == ["chunk1", "chunk2"]
 
 
 def test_save_chat_message_commits(mock_db_session, user_id):
@@ -46,15 +45,16 @@ def test_save_chat_message_commits(mock_db_session, user_id):
 def test_stream_and_store_response_yields_and_saves(mock_db_session, user_id):
     user_input = "Hi"
     fake_chunks = ["part1", "part2"]
-    with patch("services.chat.stream_llm_response", return_value=iter(fake_chunks)):
-        gen = stream_and_store_response(user_input, user_id, mock_db_session)
-        output = list(gen)
-        assert output == fake_chunks
-        # Should save the concatenated response
-        assert mock_db_session.add.called
-        chat_entry = mock_db_session.add.call_args[0][0]
-        assert chat_entry.sender == SenderEnum.bot
-        assert chat_entry.message == "part1part2"
+    fake_llm_client = MagicMock()
+    fake_llm_client.stream.return_value = iter(fake_chunks)
+    gen = stream_and_store_response(fake_llm_client, user_input, user_id, mock_db_session)
+    output = list(gen)
+    assert output == fake_chunks
+    # Should save the concatenated response
+    assert mock_db_session.add.called
+    chat_entry = mock_db_session.add.call_args[0][0]
+    assert chat_entry.sender == SenderEnum.bot
+    assert chat_entry.message == "part1part2"
 
 
 def test_get_recent_chat_history_returns_list(user_id):

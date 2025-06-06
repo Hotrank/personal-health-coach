@@ -21,7 +21,7 @@ class FHIRClient:
             return resource_class(**resource_json)
         else:
             response.raise_for_status()
-    
+
     def search_resource_by_identifier(self, resource_type: str, identifier: str) -> Resource:
         """
         Search for a FHIR resource by its identifier.
@@ -38,7 +38,6 @@ class FHIRClient:
                 raise ValueError(f"No {resource_type} found with identifier: {identifier}")
         else:
             response.raise_for_status()
-
 
     def _create_resource(self, resource: Resource) -> Resource:
         """
@@ -71,7 +70,7 @@ class FHIRClient:
         Search for a Patient resource by user ID.
         """
         return self.search_resource_by_identifier("Patient", user_id)
-    
+
     def get_placeholder_mapping(self, user_id: str) -> dict:
         """
         Retrieve a mapping of placeholders to actual values for a given user ID.
@@ -82,7 +81,7 @@ class FHIRClient:
         return {
             "<patient_id>": patient_id,
         }
-    
+
     def create_resource(self, resource_data: dict, user_id: str) -> Resource:
         """
         Create a new FHIR resource of the specified type with the provided data.
@@ -96,7 +95,6 @@ class FHIRClient:
 
 
 def replace_placeholders(resource_dict: dict, mapping: dict) -> dict:
-    
     def _replace(obj):
         if isinstance(obj, dict):
             return {k: _replace(v) for k, v in obj.items()}
@@ -108,9 +106,5 @@ def replace_placeholders(resource_dict: dict, mapping: dict) -> dict:
             return obj
         else:
             return obj
-    
+
     return _replace(resource_dict)
-
-
-    
- 

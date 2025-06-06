@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -13,7 +13,9 @@ app.include_router(router)
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    app.state.llm_client = MagicMock()  # Mock the LLM client
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def test_chat_missing_token(client):

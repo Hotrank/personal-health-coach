@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from typing import Generator, Optional
 from uuid import UUID
 
-import ollama
 from database.db_models import ChatHistory, SenderEnum, UserMemory
+from llm.base import LLMClient
 from llm.prompts import (
     FHIR_TOOL_PROMPT,
     MEMORY_CONSOLIDATE_PROMPT,
@@ -19,6 +19,7 @@ RECENT_CHAT_COUNT = 20
 
 
 def stream_llm_response(
+    llm_client: LLMClient,
     current_input: str,
     currrent_input_role: str = "user",
     recent_messages: Optional[list[dict]] = None,
@@ -31,13 +32,9 @@ def stream_llm_response(
     # Prepare the messages for the LLM
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": FHIR_TOOL_PROMPT},
     ]
-    messages.append(
-        {
-            "role": "system",
-            "content": FHIR_TOOL_PROMPT,
-        }
-    )
+
     if user_memory:
         messages.append(
             {
@@ -47,14 +44,11 @@ def stream_llm_response(
         )
     if recent_messages:
         messages.extend(recent_messages)
+
     messages.append({"role": currrent_input_role, "content": current_input})
 
-    for chunk in ollama.chat(
-        model="llama3.2",
-        messages=messages,
-        stream=True,
-    ):
-        yield chunk["message"]["content"]
+    for chunk in llm_client.stream(messages=messages):
+        yield chunk
 
 
 def save_chat_message(
@@ -78,6 +72,7 @@ def save_chat_message(
 
 
 def stream_and_store_response(
+    llm_client: LLMClient,
     user_input: str,
     user_id: UUID,
     db: Session,
@@ -93,9 +88,10 @@ def stream_and_store_response(
 
     while True:
         llm_response_stream = stream_llm_response(
+            llm_client=llm_client,
             current_input=current_messages[-1]["content"],
             currrent_input_role=current_messages[-1]["role"],
-            recent_messages=current_messages[:-1],
+            recent_messages=recent_messages + current_messages[:-1] if recent_messages else current_messages[:-1],
             user_memory=user_memory,
         )
 
@@ -106,41 +102,35 @@ def stream_and_store_response(
             buffer = initial_chunk
             for chunk in llm_response_stream:
                 buffer += chunk
-            
-            current_messages.append(
-                {"role": "bot", "content": buffer}
-            )
+
+            current_messages.append({"role": "bot", "content": buffer})
             # parse the buffer string into a dict object
             print(f"Buffer content: {buffer}")
             tool_call = parsre_tool_call(buffer)
             tool_result = process_tool_call(tool_call, user_id)
-            current_messages.append(
-                {"role": "user", "content": tool_result}
-            )
+            current_messages.append({"role": "user", "content": tool_result})
 
             if tool_result == "failed":
                 yield "Sorry, I cannot process your request for now."
-                current_messages.append(
-                    {"role": "bot", "content": "Sorry, I cannot process your request for now."}
-                )
+                current_messages.append({"role": "bot", "content": "Sorry, I cannot process your request for now."})
                 break
             else:
                 continue
         else:
             buffer = initial_chunk
+            yield buffer
 
             for chunk in llm_response_stream:
                 buffer += chunk
                 yield chunk
-            current_messages.append(
-                {"role": "bot", "content": buffer}
-            )
+            current_messages.append({"role": "bot", "content": buffer})
             break
-        
+
     # Save all messages to the database
     print(f"messages to save: {current_messages}")
     for msg in current_messages:
         save_chat_message(db, user_id, SenderEnum(msg["role"]), msg["content"])
+
 
 def parsre_tool_call(buffer: str) -> dict:
     """
@@ -159,7 +149,8 @@ def parsre_tool_call(buffer: str) -> dict:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse tool call JSON: {e}\n\njson content: {json_str}")
-    
+
+
 def process_tool_call(tool_call: dict, user_id: str) -> str:
     """
     Process the tool call by executing the specified function with the provided arguments.
@@ -173,7 +164,7 @@ def process_tool_call(tool_call: dict, user_id: str) -> str:
         return fhir_client.create_resource(resource_data, user_id).model_dump_json()
     else:
         return "failed"
-        
+
 
 def get_recent_chat_history(
     db: Session,
@@ -233,23 +224,21 @@ def update_user_memory(db: Session, user_id: UUID):
     db.commit()
 
 
-def summarize_messages(messages: str) -> str:
+def summarize_messages(llm_client: LLMClient, messages: str) -> str:
     """
     Use the LLM to summarize the provided messages into succinct bullet points.
     """
 
-    response = ollama.chat(
-        model="llama3.2",
+    response = llm_client.complete(
         messages=[
             {
                 "role": "user",
                 "content": MEMORY_SUMMARIZE_PROMPT.format(messages=messages),
             }
         ],
-        stream=False,
     )
 
-    return response["message"]["content"].strip()
+    return response.strip()
 
 
 def get_user_memory(db: Session, user_id: UUID) -> Optional[str]:
@@ -262,7 +251,7 @@ def get_user_memory(db: Session, user_id: UUID) -> Optional[str]:
     return memory_entry.memory if memory_entry else None
 
 
-def consolidate_user_memory(existing_memory: Optional[str], new_memory: str):
+def consolidate_user_memory(llm_client: LLMClient, existing_memory: Optional[str], new_memory: str):
     """
     Consolidate the user's memory by comparing new memory with existing memory,
     use llm to determine whether to update the existing memory. If so, output the
@@ -272,15 +261,13 @@ def consolidate_user_memory(existing_memory: Optional[str], new_memory: str):
     if not existing_memory:
         return new_memory  # If no existing memory, return the new memory directly
 
-    response = ollama.chat(
-        model="llama3.2",
+    response = llm_client.complete(
         messages=[
             {
                 "role": "user",
                 "content": MEMORY_CONSOLIDATE_PROMPT.format(existing_memory=existing_memory, new_memory=new_memory),
             }
         ],
-        stream=False,
     )
 
-    return response["message"]["content"].strip()
+    return response.strip()

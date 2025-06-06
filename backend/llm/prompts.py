@@ -23,7 +23,7 @@ MEMORY_CONSOLIDATE_PROMPT = (
     "New Memory:\n{new_memory}]\n"
 )
 
-FHIR_TOOL_PROMPT =  """You have access to a FHIR-based health data store through a set of predefined tools.
+FHIR_TOOL_PROMPT = """You have access to a FHIR-based health data store through a set of predefined tools.
 
 you can write or retrieve relevant health information from the patient's FHIR records to answer user questions.
 
