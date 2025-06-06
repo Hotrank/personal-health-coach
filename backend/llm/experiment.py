@@ -27,7 +27,7 @@ from backend.llm.openai_client import OpenAIClient
 load_dotenv(dotenv_path="dev.env")
 
 client = OpenAIClient(model="gpt-4o")
-response = client.stream(
+response = client.complete(
     messages=[
         {
             "role": "system",
@@ -39,5 +39,7 @@ response = client.stream(
         },
     ]
 )
-for chunk in response:
-    print(chunk, end="", flush=True)
+
+print(response)
+# for chunk in response:
+#     print(chunk, end="", flush=True)
